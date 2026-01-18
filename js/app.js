@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let buttonsHtml = '';
         nextStates.forEach(state => {
             // Helper to make button labels readable (e.g., IN_REVIEW -> "In Review")
-            const label = state.replace('_', ' '); 
+            const label = state.replace(/_/g, ' '); 
             buttonsHtml += `<button class="action-btn" onclick="window.TaskApp.handleMove('${task.id}', '${state}')">${label}</button>`;
         });
 
@@ -102,9 +102,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset counts
         document.querySelectorAll('.column-header .count').forEach(span => span.innerText = '0');
         
-        // Calculate
+        // Calculate counts using a safe approach
         const counts = {};
-        visibleTasks.forEach(t => counts[t.state] = (counts[t.state] || 0) + 1);
+        
+        visibleTasks.forEach(t => {
+            const currentCount = counts[t.state] || 0;
+            counts[t.state] = currentCount + 1;
+        });
         
         // Update DOM
         Object.keys(counts).forEach(state => {
@@ -113,9 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Core Logic: Optimistic Updates & Rollback (Req #4) ---
+    // --- Core Logic: Optimistic Updates & Rollback ---
 
-    // Exposed globally so inline onclick handlers works
     window.TaskApp = {
         handleMove: (taskId, targetState) => {
             const task = allTasks.find(t => t.id === taskId);
@@ -126,10 +129,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // 1. Optimistic UI Update: Move Visually Immediately
             moveCardVisuals(taskId, targetState);
 
-            // 2. Enqueue Async Operation (Req #3)
+            // 2. Enqueue Async Operation
             window.AppQueue.enqueue(async () => {
                 try {
-                    // 3. Call Simulator (Random delays/failures)
+                    // 3. Call Simulator
                     const updatedTask = await window.WorkflowEngine.transitionTaskAsync(task, targetState);
                     
                     // 4. Persist Success
@@ -139,32 +142,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     const idx = allTasks.findIndex(t => t.id === taskId);
                     allTasks[idx] = updatedTask;
 
+                    // 5. Success Cleanup: Re-render to remove loading state and update buttons
+                    renderBoard(); 
+
                 } catch (error) {
-                    // 5. ROLLBACK on Failure (Req #4)
+                    // 6. ROLLBACK on Failure
                     console.warn("Operation failed, rolling back UI", error);
-                    
-                    // Revert UI
                     revertCardVisuals(taskId, previousState);
-                    
-                    // Show Error
                     logError(taskId, error.message);
                 }
             }, `Moving task ${taskId} to ${targetState}`);
         }
     };
 
-    // Helper: Visually move card without waiting for backend
+    // Helper: Visually move card
     function moveCardVisuals(taskId, targetState) {
         const card = document.getElementById(`task-${taskId}`);
         if (!card) return;
 
-        // Add loading style
         card.classList.add('loading');
-        
-        // Append to new column
         uiColumns[targetState].appendChild(card);
         
-        // Disable buttons to prevent double-click race conditions (Req #8)
         const btns = card.querySelectorAll('button');
         btns.forEach(b => b.disabled = true);
     }
@@ -175,13 +173,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!card) return;
 
         card.classList.remove('loading');
-        card.classList.add('error'); // Shake animation
+        card.classList.add('error'); 
         
-        // Move back
         uiColumns[oldState].appendChild(card);
         
-        // Re-enable buttons (rendered fresh)
-        setTimeout(() => renderBoard(), 1000); // Full re-render to clean up state
+        // Re-enable buttons
+        setTimeout(() => renderBoard(), 1000); 
     }
 
     // --- Task Creation ---
@@ -220,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, "Creating new task");
     };
 
-    // --- Search & Filter (Debounced) ---
+    // --- Search & Filter ---
     
     const debouncedRender = debounce(() => renderBoard(), 300);
     searchInput.addEventListener('input', debouncedRender);
@@ -234,25 +231,19 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // --- Error Logging ---
     function logError(context, msg) {
         const div = document.createElement('div');
         div.style.color = '#ff5630';
         div.style.fontSize = '0.8em';
         div.innerText = `[${new Date().toLocaleTimeString()}] ${context}: ${msg}`;
         errorLog.prepend(div);
-        
-        // Auto clear after 5s
         setTimeout(() => div.remove(), 5000);
     }
 
-    // --- Time-Based Automation (Req #7) ---
     function startAutoAutomations() {
         setInterval(() => {
             // Check for tasks "In Review" > 10 seconds (Simulated "auto approval")
             // This demonstrates background automation checking state
-            const now = Date.now();
-            
             // This is just a visual check demo, actual mutation should go through queue
             // We won't mutate here to avoid confusing the manual user flow demo,
             // but in a real app, you'd find tasks and AppQueue.enqueue(transition...)
