@@ -26,7 +26,6 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    /* Prevent body scroll, let board scroll */
 }
 
 .app-header {
@@ -45,12 +44,11 @@ body {
 .kanban-board {
     display: flex;
     overflow-x: auto;
-    /* Allow horizontal scroll */
     padding: 1rem;
     gap: 1rem;
     flex: 1;
     align-items: flex-start;
-    /* Scroll Snapping for Mobile */
+    justify-content: center;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
 }
