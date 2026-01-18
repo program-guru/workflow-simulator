@@ -40,6 +40,13 @@ body {
     z-index: 10;
 }
 
+.controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+}
+
 /* Responsive Kanban Board */
 .kanban-board {
     display: flex;
