@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Workflow Simulator</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header class="app-header">
+        <h1>Workflow Simulator</h1>
+        <div class="controls">
+            <button id="createTaskBtn" class="btn-primary">+ New Task</button>
+            <div id="connectionStatus" class="status-indicator online">System: Online</div>
+        </div>
+        
+        <div class="filter-bar">
+            <input type="text" id="searchInput" placeholder="Search tasks (Async)...">
+            <select id="priorityFilter">
+                <option value="ALL">All Priorities</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+            </select>
+        </div>
+    </header>
+
+    <main class="kanban-board">
+        <div class="column" data-status="DRAFT">
+            <div class="column-header">Draft <span class="count">0</span></div>
+            <div class="task-list" id="col-draft"></div>
+        </div>
+        <div class="column" data-status="SUBMITTED">
+            <div class="column-header">Submitted <span class="count">0</span></div>
+            <div class="task-list" id="col-submitted"></div>
+        </div>
+        <div class="column" data-status="IN_REVIEW">
+            <div class="column-header">In Review <span class="count">0</span></div>
+            <div class="task-list" id="col-review"></div>
+        </div>
+        <div class="column" data-status="APPROVED">
+            <div class="column-header">Approved <span class="count">0</span></div>
+            <div class="task-list" id="col-approved"></div>
+        </div>
+        <div class="column" data-status="COMPLETED">
+            <div class="column-header">Completed <span class="count">0</span></div>
+            <div class="task-list" id="col-completed"></div>
+        </div>
+        <div class="column" data-status="REJECTED">
+            <div class="column-header">Rejected <span class="count">0</span></div>
+            <div class="task-list" id="col-rejected"></div>
+        </div>
+    </main>
+
+    <footer id="bgQueuePanel">
+        <span>Queue: <strong id="queueCount">0</strong></span>
+        <span>Active: <strong id="activeJob">Idle</strong></span>
+        <div id="errorLog" class="error-log"></div>
+    </footer>
+
+    <div id="taskModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Create New Task</h2>
+            <input type="text" id="newTaskTitle" placeholder="Task Title">
+            <select id="newTaskPriority">
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+            </select>
+            <div class="modal-actions">
+                <button id="cancelTaskBtn">Cancel</button>
+                <button id="saveTaskBtn" class="btn-primary">Save Draft</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/stateMachine.js"></script>
+    <script src="js/asyncQueue.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
