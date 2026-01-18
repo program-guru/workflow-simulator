@@ -1,14 +1,23 @@
 :root {
     --bg-color: #f4f5f7;
     --card-bg: #ffffff;
-    --primary: #0079bf;
-    --danger: #eb5a46;
-    --success: #61bd4f;
     --text: #172b4d;
+
+    /* State Colors */
+    --col-draft: #dfe1e6;
+    --col-submitted: #b3d4ff;
+    --col-review: #fffae6;
+    /* Yellowish */
+    --col-approved: #e3fcef;
+    /* Light Green */
+    --col-completed: #00875a;
+    /* Dark Green text/border */
+    --col-rejected: #de350b;
+    /* Red */
 }
 
 body {
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
     margin: 0;
     padding: 0;
     background-color: var(--bg-color);
@@ -16,26 +25,34 @@ body {
     height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    /* Prevent body scroll, let board scroll */
 }
 
 .app-header {
     background: #ffffff;
     padding: 1rem;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
     align-items: center;
     justify-content: space-between;
+    z-index: 10;
 }
 
+/* Responsive Kanban Board */
 .kanban-board {
     display: flex;
     overflow-x: auto;
+    /* Allow horizontal scroll */
     padding: 1rem;
     gap: 1rem;
     flex: 1;
     align-items: flex-start;
+    /* Scroll Snapping for Mobile */
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
 }
 
 .column {
@@ -46,12 +63,44 @@ body {
     max-height: 100%;
     display: flex;
     flex-direction: column;
+    scroll-snap-align: start;
+    border-top: 5px solid transparent;
+    /* Placeholder for color */
+}
+
+/* Color Coded Columns */
+.column[data-status="DRAFT"] {
+    border-top-color: #505f79;
+}
+
+.column[data-status="SUBMITTED"] {
+    border-top-color: #0079bf;
+}
+
+.column[data-status="IN_REVIEW"] {
+    border-top-color: #ff991f;
+}
+
+.column[data-status="APPROVED"] {
+    border-top-color: #00c7e6;
+}
+
+.column[data-status="COMPLETED"] {
+    border-top-color: #36b37e;
+}
+
+.column[data-status="REJECTED"] {
+    border-top-color: #bf2600;
 }
 
 .column-header {
-    padding: 10px;
-    font-weight: bold;
-    border-bottom: 2px solid #dfe1e6;
+    padding: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .task-list {
@@ -61,57 +110,119 @@ body {
     min-height: 100px;
 }
 
-/* Task Card Styling */
-.task-card {
-    background: var(--card-bg);
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 8px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    transition: transform 0.2s, opacity 0.2s;
-    border-left: 4px solid transparent;
+/* Mobile Responsiveness Adjustment */
+@media (max-width: 600px) {
+    .app-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .kanban-board {
+        padding: 0.5rem;
+    }
+
+    .column {
+        min-width: 85vw;
+        /* Columns take up most of the screen on mobile */
+    }
 }
 
-.task-card.priority-HIGH { border-left-color: var(--danger); }
-.task-card.priority-MEDIUM { border-left-color: #ff9f1a; }
-.task-card.priority-LOW { border-left-color: var(--success); }
+/* Task Card & Utilities (Same as before with minor tweaks) */
+.task-card {
+    background: var(--card-bg);
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    border-left: 4px solid #ccc;
+    cursor: pointer;
+    position: relative;
+}
 
-/* Visual Indicators for Async Actions */
+.task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Priority Indicators */
+.task-card.priority-HIGH {
+    border-left-color: #ff5630;
+}
+
+.task-card.priority-MEDIUM {
+    border-left-color: #ffab00;
+}
+
+.task-card.priority-LOW {
+    border-left-color: #36b37e;
+}
+
+/* Async/Locked States */
 .task-card.loading {
-    opacity: 0.6;
+    opacity: 0.7;
     pointer-events: none;
-    background-image: repeating-linear-gradient(45deg, #fff, #fff 10px, #f0f0f0 10px, #f0f0f0 20px);
+    background: repeating-linear-gradient(45deg, #fff, #fff 10px, #f4f5f7 10px, #f4f5f7 20px);
 }
 
 .task-card.error {
-    border: 2px solid var(--danger);
-    animation: shake 0.3s;
+    border: 2px solid #bf2600;
 }
 
+/* Footer & Modal */
 footer {
-    background: #333;
+    background: #172b4d;
     color: #fff;
-    padding: 0.5rem;
-    font-size: 0.9rem;
+    padding: 0.8rem;
+    font-size: 0.85rem;
     display: flex;
-    gap: 1rem;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .modal {
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
+    inset: 0;
+    background: rgba(9, 30, 66, 0.54);
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 100;
 }
-.hidden { display: none; }
-.modal-content { background: #fff; padding: 2rem; border-radius: 8px; width: 300px; }
-.modal-content input, .modal-content select { width: 100%; margin-bottom: 1rem; padding: 0.5rem; }
 
-@keyframes shake {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    50% { transform: translateX(5px); }
-    100% { transform: translateX(0); }
+.hidden {
+    display: none !important;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 24px;
+    border-radius: 4px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background: #0079bf;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #026aa7;
 }
