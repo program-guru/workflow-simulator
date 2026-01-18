@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await window.AppStorage.load();
             allTasks = data.tasks || [];
             renderBoard();
-            startAutoAutomations(); // Req #7
+            startAutoAutomations(); 
         } catch (e) {
             logError("System Error", "Failed to load initial data.");
         }
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <strong>${task.title}</strong>
                 <span style="font-size:0.8em; color: #666;">${task.priority}</span>
             </div>
-            <div class="card-meta">ID: ${task.id.substr(0,4)}</div>
+            <div class="card-meta">ID: ${task.id}</div>
             <div class="card-actions" style="margin-top:8px; display:flex; gap:5px;">
                 ${buttonsHtml}
             </div>
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset counts
         document.querySelectorAll('.column-header .count').forEach(span => span.innerText = '0');
         
-        // Calculate counts using a safe approach
+        // Calculate
         const counts = {};
         
         visibleTasks.forEach(t => {
@@ -124,10 +124,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const task = allTasks.find(t => t.id === taskId);
             if (!task) return;
 
-            const previousState = task.state;
-            
-            // 1. Optimistic UI Update: Move Visually Immediately
-            moveCardVisuals(taskId, targetState);
+            // 1. Lock UI In-Place: Don't move yet, just show loading
+            setCardLoadingState(taskId, true);
 
             // 2. Enqueue Async Operation
             window.AppQueue.enqueue(async () => {
@@ -142,43 +140,33 @@ document.addEventListener('DOMContentLoaded', () => {
                     const idx = allTasks.findIndex(t => t.id === taskId);
                     allTasks[idx] = updatedTask;
 
-                    // 5. Success Cleanup: Re-render to remove loading state and update buttons
+                    // 5. Success: Re-render board (This effectively moves the card)
                     renderBoard(); 
 
                 } catch (error) {
-                    // 6. ROLLBACK on Failure
-                    console.warn("Operation failed, rolling back UI", error);
-                    revertCardVisuals(taskId, previousState);
+                    // 6. Failure: Unlock UI In-Place (Don't move)
+                    console.warn("Operation failed", error);
+                    setCardLoadingState(taskId, false); // Remove loading stripes
                     logError(taskId, error.message);
                 }
             }, `Moving task ${taskId} to ${targetState}`);
         }
     };
 
-    // Helper: Visually move card
-    function moveCardVisuals(taskId, targetState) {
+    // Helper: Toggles loading state without moving DOM
+    function setCardLoadingState(taskId, isLoading) {
         const card = document.getElementById(`task-${taskId}`);
         if (!card) return;
 
-        card.classList.add('loading');
-        uiColumns[targetState].appendChild(card);
-        
-        const btns = card.querySelectorAll('button');
-        btns.forEach(b => b.disabled = true);
-    }
-
-    // Helper: Revert visual move
-    function revertCardVisuals(taskId, oldState) {
-        const card = document.getElementById(`task-${taskId}`);
-        if (!card) return;
-
-        card.classList.remove('loading');
-        card.classList.add('error'); 
-        
-        uiColumns[oldState].appendChild(card);
-        
-        // Re-enable buttons
-        setTimeout(() => renderBoard(), 1000); 
+        if (isLoading) {
+            card.classList.add('loading');
+            const btns = card.querySelectorAll('button');
+            btns.forEach(b => b.disabled = true);
+        } else {
+            card.classList.remove('loading');
+            const btns = card.querySelectorAll('button');
+            btns.forEach(b => b.disabled = false);
+        }
     }
 
     // --- Task Creation ---
@@ -207,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         modal.classList.add('hidden');
 
-        // Optimistic add
+        // Immediate add for creation is okay (or you can make this async too)
         allTasks.push(newTask);
         renderBoard();
 
@@ -242,11 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startAutoAutomations() {
         setInterval(() => {
-            // Check for tasks "In Review" > 10 seconds (Simulated "auto approval")
-            // This demonstrates background automation checking state
-            // This is just a visual check demo, actual mutation should go through queue
-            // We won't mutate here to avoid confusing the manual user flow demo,
-            // but in a real app, you'd find tasks and AppQueue.enqueue(transition...)
+            // Background automation placeholder
         }, 5000);
     }
 });
